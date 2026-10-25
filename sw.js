@@ -1,4 +1,4 @@
-const CACHE = "epe-v17";
+const CACHE = "epe-v33";
 const PRECACHE = ["/", "/archivo.html", "/404.html", "/estilo.css", "/sitio.js", "/manifest.webmanifest", "/favicon-32.png", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", e => {
