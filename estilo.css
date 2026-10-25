@@ -74,6 +74,12 @@ h1{
   color:var(--ink-soft);
   margin-top:40px;
 }
+.palabras{
+  text-align:center;
+  color:#a8a8a8;
+  font-size:14px;
+  margin-top:-0.8em;
+}
 
 /* Compartir · comentar · suscribirme */
 .share{
