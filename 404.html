@@ -46,12 +46,161 @@
   </main>
   <footer>
     <div id="contacto"></div>
+    <div id="globo-visitas" class="globo" aria-label="Globo de visitas"></div>
+    <div id="visitas" aria-live="polite"></div>
     <div>© 2026 escribirporescribir</div>
   </footer>
 <script>
 window.EPE = {api: "", newsletter: "", contador: false};
 </script>
 <script src="/sitio.js"></script>
+<script>
+// Llamada al Worker de visitas. ?nocontar marca este navegador para que no cuente; ?contar lo deshace.
+(function(){
+  var API="https://epe-visitas.theironsgolfclub.workers.dev";
+  function lget(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  function lset(k,v){try{if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){}}
+  function sget(k){try{return sessionStorage.getItem(k);}catch(e){return null;}}
+  function sset(k,v){try{sessionStorage.setItem(k,v);}catch(e){}}
+  var q=location.search;
+  if(/[?&]nocontar\b/.test(q)){lset("epe_nocontar","1");}
+  if(/[?&]contar\b/.test(q)){lset("epe_nocontar",null);}
+  var nocontar=lget("epe_nocontar")==="1";
+  if(/[?&](no)?contar\b/.test(q)){
+    var t=document.createElement("div");
+    t.textContent=nocontar?"Este navegador ya no cuenta visitas":"Este navegador vuelve a contar visitas";
+    t.style.cssText="position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#1c1a17;color:#f2ead8;font:600 13px system-ui,sans-serif;padding:9px 14px;border-radius:6px;z-index:99;box-shadow:0 4px 12px rgba(0,0,0,.3)";
+    if(document.body){document.body.appendChild(t);setTimeout(function(){t.remove();},4000);}
+  }
+  // Globo: la visita se registra una vez por sesion (/visit) y nunca si el navegador esta marcado. Contador: suma en cada carga salvo marcado.
+  var ruta=(nocontar||sget("epe_visita"))?"/points":"/visit";
+  var url=API+ruta+"?"+(nocontar?"get":"hit")+"=home";
+  var ctl=("AbortController" in window)?new AbortController():null;
+  var to=setTimeout(function(){if(ctl)ctl.abort();},5000);
+  window.EPEV={nocontar:nocontar,resp:fetch(url,{cache:"no-store",signal:ctl?ctl.signal:undefined})
+    .then(function(r){clearTimeout(to);if(!r.ok)throw 0;return r.json();})
+    .then(function(j){if(ruta==="/visit")sset("epe_visita","1");return j;},function(e){clearTimeout(to);throw e;})};
+})();
+</script>
+<script>
+(function(){
+  var v=document.getElementById("visitas");
+  if(!v)return;
+  function show(n){v.textContent="VISITANTES: "+String(n).padStart(6,"0").replace(/\B(?=(\d{3})+(?!\d))/g,".");}
+  show(0);
+  var ult=null;try{ult=localStorage.getItem("epe_cnt_home");}catch(e){}
+  window.EPEV.resp
+    .then(function(j){if(typeof j.count!=="number")throw 0;try{localStorage.setItem("epe_cnt_home",String(j.count));}catch(e){}show(j.count);})
+    .catch(function(){if(ult)show(+ult);});
+})();
+</script>
+<script>
+(function(){
+  // Globo de visitas: oceano azul, tierra blanca.
+  // Rojo = visitas pasadas (guardadas para siempre en Cloudflare KV); amarillo = el visitante actual.
+  var LIB="https://cdn.jsdelivr.net/npm/globe.gl@2.46.2/dist/globe.gl.min.js";
+  var TOPOLIB="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js";
+  var MAPA="https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json";
+  var ROJO="#e0182a", AMARILLO="#ffd400", TAM=250;
+  var el=document.getElementById("globo-visitas");
+  if(!el)return;
+  function sget(k){try{return sessionStorage.getItem(k);}catch(e){return null;}}
+  function sset(k,v){try{sessionStorage.setItem(k,v);}catch(e){}}
+  function lget(k){try{return JSON.parse(localStorage.getItem(k)||"null");}catch(e){return null;}}
+  function lset(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function conTiempo(url,ms){
+    var ctl=("AbortController" in window)?new AbortController():null;
+    var t=setTimeout(function(){if(ctl)ctl.abort();},ms);
+    return fetch(url,{cache:"no-store",signal:ctl?ctl.signal:undefined})
+      .then(function(r){clearTimeout(t);if(!r.ok)throw 0;return r.json();},function(e){clearTimeout(t);throw e;});
+  }
+  function red(x){return Math.round(x*10)/10;}
+  var yo=null;
+  try{yo=JSON.parse(sget("epe_yo")||"null");}catch(e){yo=null;}
+
+  // 1) Visitas: una por sesion. Maximo 5 s de espera.
+  var datos=window.EPEV.resp
+    .then(function(j){
+      if(j.you){yo=j.you;sset("epe_yo",JSON.stringify(yo));}
+      var pts=j.points||[];
+      lset("epe_pts",pts);
+      return pts;
+    })
+    .catch(function(){
+      // Cloudflare no responde (p. ej. bloqueos de LaLiga): puntos que este navegador vio la ultima vez
+      return lget("epe_pts")||[];
+    });
+
+  // 2) Punto amarillo: si el Worker no ha dado la ubicacion, se pide a un servicio de geolocalizacion por IP (solo para pintarlo)
+  var ubic=datos.then(function(){
+    if(yo)return yo;
+    function prueba(url,lat,lon){
+      return conTiempo(url,4000).then(function(j){
+        var a=parseFloat(j[lat]),b=parseFloat(j[lon]);
+        if(!isFinite(a)||!isFinite(b))throw 0;
+        yo={lat:red(a),lon:red(b)};sset("epe_yo",JSON.stringify(yo));return yo;
+      });
+    }
+    return prueba("https://ipwho.is/","latitude","longitude")
+      .catch(function(){return prueba("https://get.geojs.io/v1/ip/geo.json","latitude","longitude");})
+      .catch(function(){return prueba("https://freeipapi.com/api/json","latitude","longitude");})
+      .catch(function(){return null;});
+  });
+
+  function esYo(p){return !!yo&&p.lat===yo.lat&&p.lon===yo.lon;}
+  function cargarJS(src){
+    return new Promise(function(ok,ko){
+      var s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=ko;document.head.appendChild(s);
+    });
+  }
+
+  // 3) El globo se pinta en cuanto llegan la libreria y el mapa, sin esperar a las visitas
+  var mapa=fetch(MAPA).then(function(r){return r.json();});
+  Promise.all([cargarJS(LIB),cargarJS(TOPOLIB),mapa]).then(function(r){
+    var topo=r[2];
+    var paises=topojson.feature(topo,topo.objects.countries).features;
+    var g=Globe()(el);
+    g.width(TAM).height(TAM)
+      .backgroundColor("rgba(0,0,0,0)")
+      .showAtmosphere(true).atmosphereColor("#bfe6ff").atmosphereAltitude(0.12)
+      .polygonsData(paises)
+      .polygonCapColor(function(){return "#ffffff";})
+      .polygonSideColor(function(){return "rgba(255,255,255,0)";})
+      .polygonStrokeColor(function(){return "#9fd8fb";})
+      .polygonAltitude(0.006)
+      .polygonsTransitionDuration(0)
+      .pointLat("lat").pointLng("lon")
+      .pointColor(function(p){return esYo(p)?AMARILLO:ROJO;})
+      .pointAltitude(function(p){return esYo(p)?0.03:0.015;})
+      .pointRadius(function(p){return esYo(p)?1.8:1.3;})
+      .pointResolution(10)
+      .pointsTransitionDuration(0)
+      .pointLabel(function(p){return [p.c,p.p].filter(Boolean).join(", ");})
+      .ringLat("lat").ringLng("lon")
+      .ringColor(function(){return function(t){return "rgba(255,212,0,"+(1-t)+")";};})
+      .ringMaxRadius(7).ringPropagationSpeed(3).ringRepeatPeriod(900);
+    var m=g.globeMaterial();
+    m.color.set("#38b2f4");
+    if(m.emissive)m.emissive.set("#0a4f8a");
+    if("shininess" in m)m.shininess=30;
+    g.pointOfView({lat:yo?yo.lat:30,lng:yo?yo.lon:10,altitude:1.75},0);
+    var c=g.controls();
+    c.autoRotate=true;c.autoRotateSpeed=1.2;c.enableZoom=false;
+
+    function puntos(pts){
+      pts=(pts||[]).slice();
+      if(yo&&!pts.some(esYo))pts.push({lat:yo.lat,lon:yo.lon,c:"",p:""});
+      g.pointsData(pts);
+      g.ringsData(yo?[yo]:[]);
+    }
+    datos.then(puntos);
+    ubic.then(function(u){
+      datos.then(puntos);
+      if(u)g.pointOfView({lat:u.lat,lng:u.lon,altitude:1.75},1200);
+    });
+  }).catch(function(){el.style.display="none";});
+})();
+</script>
 <script>
 if ("serviceWorker" in navigator) { window.addEventListener("load", function () { navigator.serviceWorker.register("/sw.js"); }); }
 </script>

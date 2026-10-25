@@ -232,10 +232,13 @@ footer{
   font-size:14px;
   color:var(--ink-soft);
 }
-footer #visitas{letter-spacing:.12em;margin-bottom:20px}
+footer #visitas{display:table;margin:0 auto 20px;color:var(--ink);font-size:15px;font-weight:bold;letter-spacing:.12em;border-bottom:1px solid var(--line);padding:0 0 2px}
 footer #visitas:empty{display:none}
-footer #contacto{margin-bottom:28px}
+footer #contacto{margin-bottom:28px;font-size:16px}
 footer a:hover{color:var(--ink)}
+.globo{width:250px;height:250px;max-width:100%;margin:0 auto 26px;cursor:grab;position:relative}
+.globo::after{content:"";position:absolute;left:22%;right:22%;bottom:-8px;height:12px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(0,0,0,.45) 0%,rgba(0,0,0,.18) 45%,rgba(0,0,0,0) 72%);pointer-events:none}
+.globo:active{cursor:grabbing}
 
 @media (max-width:600px){
   header.top{padding:0 16px}

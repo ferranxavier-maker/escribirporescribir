@@ -41,7 +41,7 @@
 
   /* Comentarios */
   var sec = document.getElementById("comments");
-  if (sec && cfg.api){
+  if (sec){
     var slug = sec.dataset.slug, lista = document.getElementById("comments-list"), slot = document.getElementById("form-slot");
     function form(padre){
       return '<form class="form" data-padre="' + (padre || "") + '">' +
@@ -62,7 +62,7 @@
       }).join("");
       if (raiz.length) sec.hidden = false;
     }
-    fetch(cfg.api + "/comentarios?slug=" + encodeURIComponent(slug)).then(function(r){ return r.json(); }).then(pinta).catch(function(){});
+    if (cfg.api) fetch(cfg.api + "/comentarios?slug=" + encodeURIComponent(slug)).then(function(r){ return r.json(); }).then(pinta).catch(function(){});
     var bCom = document.querySelector("[data-comentar]");
     if (bCom) bCom.addEventListener("click", function(){
       sec.hidden = false;
@@ -86,8 +86,10 @@
     sec.addEventListener("submit", function(ev){
       ev.preventDefault();
       var f = ev.target, datos = { slug: slug, padre: f.dataset.padre || null, nombre: f.nombre.value, texto: f.texto.value };
+      var gracias = function(){ f.outerHTML = '<p class="thanks">Gracias. Tu comentario aparecerá cuando se revise.</p>'; };
+      if (!cfg.api){ gracias(); return; }
       fetch(cfg.api + "/comentarios", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(datos) })
-        .finally(function(){ f.outerHTML = '<p class="thanks">Gracias. Tu comentario aparecerá cuando se revise.</p>'; });
+        .finally(gracias);
     });
   }
 
