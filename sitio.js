@@ -8,11 +8,24 @@
   var c = document.getElementById("contacto");
   if (c){ var m = "contacto" + "@" + ["escribirporescribir","com"].join("."); c.innerHTML = '<a href="mailto:' + m + '">' + m + '</a>'; }
 
-  /* Compartir: menú nativo en móvil, desplegable en ordenador */
+  /* Un solo desplegable abierto a la vez: compartir, comentar o suscribirme */
   var menu = document.getElementById("share-menu");
+  var fSus = document.getElementById("sus-form");
+  var sec = document.getElementById("comments");
+  var slot = document.getElementById("form-slot");
+  function cerrarShare(){ if (menu) menu.hidden = true; }
+  function cerrarSus(){ if (fSus) fSus.hidden = true; }
+  function cerrarCom(){
+    if (!sec || !slot) return;
+    slot.innerHTML = "";
+    if (!document.querySelector("#comments-list .comment")) sec.hidden = true;
+  }
+
+  /* Compartir: menú nativo en móvil, desplegable en ordenador */
   var bShare = document.querySelector("[data-share]");
   if (bShare && menu){
     bShare.addEventListener("click", function(){
+      cerrarSus(); cerrarCom();
       if (navigator.share && matchMedia("(pointer: coarse)").matches){
         navigator.share({ title: bShare.dataset.titulo, url: bShare.dataset.url }).catch(function(){});
         return;
@@ -26,9 +39,12 @@
 
   /* Suscripción */
   var bSus = document.querySelector("[data-suscribir]");
-  var fSus = document.getElementById("sus-form");
   if (bSus && fSus){
-    bSus.addEventListener("click", function(){ fSus.hidden = !fSus.hidden; if (!fSus.hidden) fSus.querySelector("input").focus(); });
+    bSus.addEventListener("click", function(){
+      cerrarShare(); cerrarCom();
+      fSus.hidden = !fSus.hidden;
+      if (!fSus.hidden) fSus.querySelector("input").focus();
+    });
     fSus.addEventListener("submit", function(ev){
       ev.preventDefault();
       var email = fSus.querySelector("input").value;
@@ -40,9 +56,8 @@
   }
 
   /* Comentarios */
-  var sec = document.getElementById("comments");
   if (sec){
-    var slug = sec.dataset.slug, lista = document.getElementById("comments-list"), slot = document.getElementById("form-slot");
+    var slug = sec.dataset.slug, lista = document.getElementById("comments-list");
     function form(padre){
       return '<form class="form" data-padre="' + (padre || "") + '">' +
         '<input type="text" name="nombre" placeholder="Nombre" required maxlength="60">' +
@@ -65,8 +80,10 @@
     if (cfg.api) fetch(cfg.api + "/comentarios?slug=" + encodeURIComponent(slug)).then(function(r){ return r.json(); }).then(pinta).catch(function(){});
     var bCom = document.querySelector("[data-comentar]");
     if (bCom) bCom.addEventListener("click", function(){
+      cerrarShare(); cerrarSus();
+      if (slot.innerHTML){ cerrarCom(); return; }
       sec.hidden = false;
-      if (!slot.innerHTML) slot.innerHTML = form(null);
+      slot.innerHTML = form(null);
       slot.scrollIntoView({ behavior: "smooth", block: "center" });
       slot.querySelector("input").focus({ preventScroll: true });
     });
