@@ -55,11 +55,12 @@ h1{
   font-size:14px;
   color:var(--ink-soft);
 }
+.entry .date{font-size:18px}
 .entry h2{
   font-weight:400;
   font-size:clamp(26px, 4.5vw, 38px);
   line-height:1.2;
-  margin:10px 0 40px;
+  margin:24px 0 40px;
 }
 .entry p{
   font-size:18px;
