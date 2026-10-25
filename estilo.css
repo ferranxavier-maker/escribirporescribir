@@ -27,7 +27,8 @@ header.top{
   padding:0 24px;
   flex:none;
 }
-.home{font-size:18px}
+.home{font-size:18px;display:flex;align-items:center}
+.home img{display:block;width:30px;height:30px}
 .home:hover{opacity:.7}
 .menu{display:flex;gap:24px;font-size:16px}
 .menu a{color:var(--ink-soft)}
@@ -244,6 +245,7 @@ footer a:hover{color:var(--ink)}
 @media (max-width:600px){
   header.top{padding:0 16px}
   .home{font-size:16px}
+  .home img{width:26px;height:26px}
   .menu{font-size:15px}
   main{padding-top:48px}
   .entry,.archive,.nf{margin-top:64px}
