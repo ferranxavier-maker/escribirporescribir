@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://escribirporescribir.com/sitemap.xml
