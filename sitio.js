@@ -110,6 +110,14 @@
     });
   }
 
+  /* Texto propio añadido a mano en /propio/<slug>.txt (si existe) */
+  var pr = document.querySelectorAll("[data-propio]");
+  Array.prototype.forEach.call(pr, function(el){
+    fetch("/propio/" + el.getAttribute("data-propio") + ".txt", { cache: "no-store" })
+      .then(function(r){ return r.ok ? r.text() : ""; })
+      .then(function(t){ t = t.replace(/^\s+|\s+$/g, ""); if (t){ el.textContent = t; el.hidden = false; } })
+      .catch(function(){});
+  });
   /* Contador de visitas */
   var v = document.getElementById("visitas");
   if (v && cfg.contador && cfg.api){

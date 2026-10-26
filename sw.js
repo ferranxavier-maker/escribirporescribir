@@ -1,5 +1,5 @@
-const CACHE = "epe-v48";
-const PRECACHE = ["/", "/archivo.html", "/404.html", "/estilo.css?v=48", "/sitio.js?v=48", "/manifest.webmanifest", "/favicon-32.png", "/icon-192.png", "/icon-512.png"];
+const CACHE = "epe-v51";
+const PRECACHE = ["/", "/archivo.html", "/404.html", "/estilo.css?v=51", "/sitio.js?v=51", "/manifest.webmanifest", "/favicon-32.png", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE.map(u => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
@@ -13,6 +13,7 @@ self.addEventListener("activate", e => {
 self.addEventListener("fetch", e => {
   const r = e.request;
   if (r.method !== "GET" || new URL(r.url).origin !== location.origin) return;
+  if (new URL(r.url).pathname.startsWith("/propio/")) return;
   if (r.mode === "navigate") {
     // páginas: primero la red (para ver textos nuevos), si no hay conexión la copia guardada
     e.respondWith(fetch(r.url, { cache: "no-cache" }).then(res => {

@@ -68,6 +68,12 @@ h1{
   line-height:1.85;
   margin-bottom:1.4em;
 }
+.entry .propio{
+  font-size:18px;
+  line-height:1.85;
+  margin-bottom:1.4em;
+  white-space:pre-line;
+}
 .entry img{max-width:100%;height:auto;display:block;margin:1.6em auto;filter:grayscale(1)}
 .end{
   text-align:center;
@@ -255,7 +261,7 @@ footer a:hover{color:var(--ink)}
   .menu{font-size:15px}
   main{padding-top:48px}
   .entry,.archive,.nf{margin-top:64px}
-  .entry p{font-size:17px}
+  .entry p,.entry .propio{font-size:17px}
   .archive li{gap:16px}
   .archive li a{font-size:17px}
   .replies{margin-left:8px;padding-left:14px}
