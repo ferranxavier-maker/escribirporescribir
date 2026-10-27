@@ -1,5 +1,5 @@
-const CACHE = "epe-v57";
-const PRECACHE = ["/", "/archivo.html", "/404.html", "/estilo.css?v=57", "/sitio.js?v=57", "/manifest.webmanifest", "/favicon-32.png", "/icon-192.png", "/icon-512.png"];
+const CACHE = "epe-v60";
+const PRECACHE = ["/", "/archivo.html", "/404.html", "/estilo.css?v=60", "/sitio.js?v=60", "/manifest.webmanifest", "/favicon-32.png", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE.map(u => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
